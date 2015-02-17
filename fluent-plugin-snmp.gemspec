@@ -9,14 +9,11 @@ Gem::Specification.new do |gem|
   gem.description   = %q{Input plugin to snmp}
   gem.summary       = %q{Input plugin to snmp}
 
-  gem.files         = `git ls-files`.split($\)                                    
+  gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.require_paths = ["lib"]
 
-  gem.add_development_dependency "fluentd"
-  gem.add_development_dependency "snmp"
-  gem.add_development_dependency "polling"
   gem.add_development_dependency "rake"
 
   gem.add_runtime_dependency "fluentd"

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 require 'snmp' # http://snmplib.rubyforge.org/doc/index.html
 require 'polling'
+require 'pry'
 
 module Fluent
   class SnmpInput < Input
@@ -167,11 +168,11 @@ module Fluent
         record = {}
         row.each do |vb|
           if nodes.nil?
-            record["value"] = vb
+            record["value"] = check_type(vb.value)
           else
             nodes.each{|param| record[param] = check_type(vb.__send__(param))}
           end
-          Engine.emit(@tag, time, record)
+          Engine.emit(tagify(@tag, vb.name), time, record)
           return {:time => time, :record => record} if test
         end
       end
@@ -184,21 +185,25 @@ module Fluent
         time = Engine.now
         record = {}
         if nodes.nil?
-          record["value"] = vb
+          record["value"] = check_type(vb.value)
         else
           nodes.each{|param| record[param] = check_type(vb.__send__(param))}
         end
-        Engine.emit(@tag, time, record)
+        Engine.emit(tagify(@tag, vb.name), time, record)
         return {:time => time, :record => record} if test
       end
     rescue => ex
       raise ex
     end
 
-    # data check from snmp
     def check_type(value)
-      if value =~ /^\d+(\.\d+)?$/
-        return value.to_f
+      case value
+      when SNMP::Integer
+        return value.to_i
+      when SNMP::ObjectId
+        return value.to_str
+      when SNMP::OctetString
+        return value.to_oid
       else
         return value.to_s
       end
@@ -206,5 +211,11 @@ module Fluent
       $log.error "snmp failed to check_type", :error=>ex.message
       $log.warn_backtrace ex.backtrace
     end
+
+    def tagify(tag_base, name)
+      t = name.to_s.split("::").last.downcase
+      tag_base + "." + t
+    end
+
   end
 end
