@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 require 'snmp' # http://snmplib.rubyforge.org/doc/index.html
 require 'polling'
 
@@ -9,7 +10,7 @@ module Fluent
     # require param: tag, mib
     config_param :tag, :string
     config_param :mib, :string
-    config_param :nodes, :string, :default => nil 
+    config_param :nodes, :string, :default => nil
     config_param :polling_time, :string, :default => nil
     config_param :polling_offset, :time, :default => 0
     config_param :polling_type, :string, :default => "run" #or async_run
@@ -48,14 +49,14 @@ module Fluent
     config_param :mib_modules, :string, :default => nil
     config_param :use_IPv6, :string, :default => nil
 
-    def configure(conf)                                                         
+    def configure(conf)
       super
 
       raise ConfigError, "snmp: 'tag' is required param" if @tag.empty?
       raise ConfigError, "snmp: 'polling_type' parameter is required on snmp input" if @polling_type.empty?
 
       # @mib, @mib_modules, @nodesを配列に変換
-      @mib = @mib.split(',').map{|str| str.strip} 
+      @mib = @mib.split(',').map{|str| str.strip}
       raise ConfigError, "snmp: 'mib' parameter is required on snmp input" if @mib.empty?
 
       @mib_modules = @mib_modules.split(',').map{|str| str.strip} unless @mib_modules.nil?
@@ -126,13 +127,13 @@ module Fluent
 
     def shutdown
       @end_flag = true
-      if @thread 
+      if @thread
         @thread.run
         @thread.join
         @thread = nil
       end
       if @manager
-        @manager.close 
+        @manager.close
       end
     end
 
@@ -162,8 +163,7 @@ module Fluent
 
     def snmp_walk(manager, mib, nodes, test=false)
       manager.walk(mib) do |row|
-        time = Engine.now 
-        time = time - time % 5
+        time = Engine.now
         record = {}
         row.each do |vb|
           if nodes.nil?
@@ -182,7 +182,6 @@ module Fluent
     def snmp_get(manager, mib, nodes, test=false)
       manager.get(mib).each_varbind do |vb|
         time = Engine.now
-        time = time - time % 5
         record = {}
         if nodes.nil?
           record["value"] = vb
@@ -198,7 +197,7 @@ module Fluent
 
     # data check from snmp
     def check_type(value)
-      if value =~ /^\d+(\.\d+)?$/ 
+      if value =~ /^\d+(\.\d+)?$/
         return value.to_f
       else
         return value.to_s
